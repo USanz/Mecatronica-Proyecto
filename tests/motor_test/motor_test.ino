@@ -24,16 +24,16 @@ void loop() {
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW); //sentido contrario
   
-  for (int i = 0; i < 255; i++) {
-    analogWrite(ENA, i);
-    analogWrite(ENB, i);
-    delay(5);
-  }
+  //for (int i = 0; i < 255; i++) {
+  analogWrite(ENA, i);
+  analogWrite(ENB, i);
+  delay(5);
+  //}
   
-  for (int i = 255; i > 0; i--) {
-    analogWrite(ENA, i);
-    analogWrite(ENB, i);
-    delay(5);
-  }
+  //for (int i = 255; i > 0; i--) {
+  analogWrite(ENA, i);
+  analogWrite(ENB, i);
+  delay(5);
+  //}
   delay(1000);
 }
