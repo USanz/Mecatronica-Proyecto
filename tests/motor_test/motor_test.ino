@@ -1,10 +1,10 @@
-int motor1pin1 = 2;
-int motor1pin2 = 3;
+int motor1pin1 = 5; //1
+int motor1pin2 = 6; //2
 
-int motor2pin1 = 4;
-int motor2pin2 = 5;
-int ENA = 6;
-int ENB = 7;
+int motor2pin1 = 3; //4
+int motor2pin2 = 9; //5
+int ENA = 10; //6
+int ENB = 11; //7
 
 void setup() {
   // put your setup code here, to run once:
@@ -24,16 +24,16 @@ void loop() {
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW); //sentido contrario
   
-  //for (int i = 0; i < 255; i++) {
+  for (int i = 0; i < 255; i++) {
   analogWrite(ENA, i);
   analogWrite(ENB, i);
   delay(5);
-  //}
+  }
   
-  //for (int i = 255; i > 0; i--) {
+  for (int i = 255; i > 0; i--) {
   analogWrite(ENA, i);
   analogWrite(ENB, i);
   delay(5);
-  //}
+  }
   delay(1000);
 }
