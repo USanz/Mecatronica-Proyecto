@@ -18,6 +18,7 @@ void setup() {
   BT.begin(9600);
 
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  myservo.write(65);
   
   motor.setSpeed(0);
   motor4.setSpeed(0);
@@ -28,8 +29,8 @@ void setup() {
 
 float d;
 float angle_rad;
-float servo_angle;
-float motor_vel;
+int servo_angle;
+int motor_vel;
 
 void loop() {
   if(BT.available() > 0) {
@@ -42,18 +43,32 @@ void loop() {
       if (angle == 0) {
         servo_angle = 65;
       } else {
-        d = map(strength, 0, 100, 0, 255);
         angle_rad = angle * M_PI / 180;
-        motor_vel = d*sin(angle_rad);
-        if (angle > 180) {
-          angle = 360 - angle;
-        }
-        servo_angle = map(angle, 0, 180, 40, 90); //TODO mirar rango servo
+
+        float min_bbb = min(strength * cos(angle_rad), 100*cos(M_PI / 4));
+        servo_angle = (int) map(max(min_bbb, -100*cos(M_PI / 4)), -100*cos(M_PI / 4), 100*cos(M_PI / 4), 40, 90);
       }
       myservo.write(servo_angle);
+
+      float min_aaa = min(strength * sin(angle_rad), 100*sin(M_PI / 4));
+      motor_vel = (int) map(max(min_aaa, -100*sin(M_PI / 4)), -100*sin(M_PI / 4), 100*sin(M_PI / 4), -255, 255);
+      if (motor_vel < 0) {
+        motor_vel *= -1;
+        motor.run(BACKWARD);
+        motor4.run(BACKWARD);
+      } else {
+        motor.run(FORWARD);
+        motor4.run(FORWARD);
+      }
+      motor.setSpeed(motor_vel);
+      motor4.setSpeed(motor_vel);
+     
       
-      Serial.print("angle: ");
-      Serial.print(servo_angle);
+      //Serial.print("servo_angle: ");
+      //Serial.print(servo_angle);
+      //Serial.println('\t');
+      Serial.print("motor_vel:   ");
+      Serial.print(motor_vel);
       Serial.println('\t');
 
       /*
