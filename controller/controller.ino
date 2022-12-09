@@ -3,107 +3,93 @@
 
 #include <Servo.h>
 
-Servo myservo;  // create servo object to control a servo
-// twelve servo objects can be created on most boards
-
-SoftwareSerial BT(A0,A1); // Definimos los pines RX y TX del Arduino conectados al Bluetooth
 
 
-AF_DCMotor motor(3);
-AF_DCMotor motor4(4);
+#define SERVO_CENTER 65
+#define MAX_VEL 255
+#define MAX_STRENGTH 100
+
+
+
+Servo servo;  // Create servo object to control a servo.
+              // twelve servo objects can be created on most boards.
+
+SoftwareSerial BT(A0,A1); // We define Arduino RX and TX pins connected to Bluetooth.
+
+AF_DCMotor left_motor(3);
+AF_DCMotor right_motor(4);
+
+int ang_range[2] = {50, 80};
+int vel_range[2] = {-MAX_VEL, MAX_VEL};
+int strength_range[2] = {0, MAX_STRENGTH};
+
 
 
 void setup() {
   Serial.begin(9600);
-  BT.begin(9600);
+  BT.begin(9600); //bluetooth attached to new pins (A0, A1) different from (RX=0, TX=1).
 
-  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
-  myservo.write(65);
+  servo.attach(9);  // attaches the servo on pin 9 to the servo object
+  servo.write(SERVO_CENTER);
   
-  motor.setSpeed(0);
-  motor4.setSpeed(0);
- 
-  motor.run(RELEASE);
-  motor4.run(RELEASE);
+  left_motor.setSpeed(0);
+  right_motor.setSpeed(0);
+  left_motor.run(RELEASE);
+  right_motor.run(RELEASE);
 }
 
-float d;
-float angle_rad;
-int servo_angle;
-int motor_vel;
+
 
 void loop() {
   if(BT.available() > 0) {
     String value = BT.readStringUntil('#');
     if(value.length() == 7) {
+
+      //get the information from bluetooth joystick app (Arduino Joystick / Arduino Bluetooth Controlled J in Play Store).
       int angle = value.substring(0, 3).toInt();
       int strength = value.substring(3, 6).toInt();
       String button = value.substring(6, 8);
 
-      if (angle == 0) {
-        servo_angle = 65;
-      } else {
-        angle_rad = angle * M_PI / 180;
-
-        float min_bbb = min(strength * cos(angle_rad), 100*cos(M_PI / 4));
-        servo_angle = (int) map(max(min_bbb, -100*cos(M_PI / 4)), -100*cos(M_PI / 4), 100*cos(M_PI / 4), 40, 90);
-      }
-      myservo.write(servo_angle);
-
-      float min_aaa = min(strength * sin(angle_rad), 100*sin(M_PI / 4));
-      motor_vel = (int) map(max(min_aaa, -100*sin(M_PI / 4)), -100*sin(M_PI / 4), 100*sin(M_PI / 4), -255, 255);
-      if (motor_vel < 0) {
-        motor_vel *= -1;
-        motor.run(BACKWARD);
-        motor4.run(BACKWARD);
-      } else {
-        motor.run(FORWARD);
-        motor4.run(FORWARD);
-      }
-      motor.setSpeed(motor_vel);
-      motor4.setSpeed(motor_vel);
-     
       
-      //Serial.print("servo_angle: ");
-      //Serial.print(servo_angle);
-      //Serial.println('\t');
+      float angle_rad = angle * M_PI / 180;
+      
+      float right_cap = min(strength * cos(angle_rad), MAX_STRENGTH*cos(M_PI / 4)); // right virtual border.
+      float joystick_x = max(right_cap, -MAX_STRENGTH*cos(M_PI / 4));               // left virtual border (negative).
+      int servo_angle = (int) map(joystick_x, -MAX_STRENGTH*cos(M_PI / 4), MAX_STRENGTH*cos(M_PI / 4), ang_range[0], ang_range[1]);
+      
+      servo.write(servo_angle);
+
+
+      float top_cap = min(strength * sin(angle_rad), MAX_STRENGTH*sin(M_PI / 4)); // top virtual border.
+      float joystick_y = max(top_cap, -MAX_STRENGTH*sin(M_PI / 4));               // bottom virtual border (negative).
+      int motor_vel = (int) map(joystick_y, -MAX_STRENGTH*sin(M_PI / 4), MAX_STRENGTH*sin(M_PI / 4), vel_range[0], vel_range[1]);
+      
+      if (motor_vel < 0) {
+        left_motor.run(BACKWARD);
+        right_motor.run(BACKWARD);
+      } else {
+        left_motor.run(FORWARD);
+        right_motor.run(FORWARD);
+      }
+      
+      left_motor.setSpeed(abs(motor_vel));
+      right_motor.setSpeed(abs(motor_vel));
+
+
+      ///DEBUG///
+      /*
+      Serial.print("servo_angle: ");
+      Serial.print(servo_angle);
+      Serial.println('\t');
       Serial.print("motor_vel:   ");
       Serial.print(motor_vel);
       Serial.println('\t');
 
-      /*
-      Serial.print("angle: ");
-      Serial.print(angle);
-      Serial.print('\t');
-      
-      Serial.print("strength: ");
-      Serial.print(strength);
-      Serial.print('\t');
-      
-      Serial.print("button: ");
-      Serial.print(button);
-      Serial.println("");
-      
-      //*/
       Serial.flush();
+      //*/
       
-      value="";
+      value = "";
 
-      if (button == "1") { //parao
-        /*
-        motor.run(FORWARD);
-        motor4.run(FORWARD);
-        motor.setSpeed(0);
-        motor4.setSpeed(0);
-        */
-      } else if (button == "4") { //movio
-        /*
-        motor.run(FORWARD);
-        motor4.run(FORWARD);
-        motor.setSpeed(220);
-        motor4.setSpeed(220);
-        */
-      }
     }
   }
 }
